@@ -4,6 +4,8 @@ from scrapy.spiders import CrawlSpider, Rule
 from cen.items import CenItem
 from scrapy.linkextractors import LinkExtractor
 import time
+import lxml.etree
+import lxml.html
 
 
 class TestSpider(CrawlSpider):
@@ -59,9 +61,17 @@ class TestSpider(CrawlSpider):
         item['imageUrl'] = ''
         if not imageUrl:
             imageUrl = hxs.xpath('//div[@id="content"][1]/div[@class="desc"]/div[1]/div[1]/img/@src')
-            item['imageUrl'] = 'http://www.cen.com.kh' + imageUrl.extract_first()
+            if imageUrl:
+                item['imageUrl'] = 'http://www.cen.com.kh' + imageUrl.extract_first()
         else:
             item['imageUrl'] = 'http://www.cen.com.kh' + imageUrl.extract_first()
 
+        root = lxml.html.fromstring(response.body)
+        lxml.etree.strip_elements(root, lxml.etree.Comment, "script", "head")
+        htmlcontent = ''
+        for p in root.xpath('//div[@class="desc"][1]'):
+            # htmlcontent = lxml.html.tostring(p, method="text", encoding=unicode)
+            htmlcontent = lxml.html.tostring(p, encoding=unicode)
+        item['htmlcontent'] = htmlcontent
 
         yield item
